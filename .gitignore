@@ -1,0 +1,18 @@
+# Environment - NOOIT committen
+.env
+
+# Dependencies
+/vendor/
+
+# IDE bestanden
+.idea/
+.vscode/
+*.swp
+
+# OS bestanden
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/logs/

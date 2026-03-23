@@ -1,0 +1,12 @@
+# .htaccess (root)
+# Blokkeer directe toegang tot alle mappen behalve /public
+
+# Blokkeer toegang tot .env bestand
+<Files ".env">
+    Require all denied
+</Files>
+
+# Blokkeer toegang tot .env.example
+<Files ".env.example">
+    Require all denied
+</Files>
