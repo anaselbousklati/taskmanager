@@ -1,6 +1,5 @@
 <?php
 
-
 class Task
 {
     private PDO $db;
@@ -9,7 +8,7 @@ class Task
     {
         $this->db = Database::getConnection();
     }
-     
+
     public function getAllByUser(int $userId, string $status = '', string $priority = '', string $sort = 'deadline'): array
     {
         $sql = "SELECT t.*, c.name AS category_name, c.color AS category_color
@@ -51,14 +50,14 @@ class Task
         return $result ?: null;
     }
 
-    public function create(array $data): bool
+    public function create(array $data): int|false
     {
         $stmt = $this->db->prepare(
             "INSERT INTO tasks (user_id, category_id, title, description, priority, status, deadline)
              VALUES (:user_id, :category_id, :title, :description, :priority, :status, :deadline)"
         );
 
-        return $stmt->execute([
+        $success = $stmt->execute([
             ':user_id'     => $data['user_id'],
             ':category_id' => !empty($data['category_id']) ? $data['category_id'] : null,
             ':title'       => $data['title'],
@@ -67,10 +66,14 @@ class Task
             ':status'      => $data['status'] ?? 'open',
             ':deadline'    => !empty($data['deadline']) ? $data['deadline'] : null,
         ]);
+
+        return $success ? (int)$this->db->lastInsertId() : false;
     }
 
     public function update(int $id, int $userId, array $data): bool
     {
+        $current = $this->getById($id, $userId);
+
         $stmt = $this->db->prepare(
             "UPDATE tasks
              SET category_id = :category_id,
@@ -82,7 +85,7 @@ class Task
              WHERE id = :id AND user_id = :user_id"
         );
 
-        return $stmt->execute([
+        $success = $stmt->execute([
             ':id'          => $id,
             ':user_id'     => $userId,
             ':category_id' => !empty($data['category_id']) ? $data['category_id'] : null,
@@ -92,6 +95,13 @@ class Task
             ':status'      => $data['status'] ?? 'open',
             ':deadline'    => !empty($data['deadline']) ? $data['deadline'] : null,
         ]);
+
+        if ($success && $current && $current['status'] !== ($data['status'] ?? 'open')) {
+            $log = new TaskLog();
+            $log->log($id, $current['status'], $data['status']);
+        }
+
+        return $success;
     }
 
     public function delete(int $id, int $userId): bool
@@ -106,11 +116,11 @@ class Task
     {
         $stmt = $this->db->prepare(
             "SELECT
-                COUNT(*)                                        AS totaal,
-                SUM(status = 'open')                           AS open,
-                SUM(status = 'bezig')                          AS bezig,
-                SUM(status = 'gedaan')                         AS gedaan,
-                SUM(priority = 'hoog' AND status != 'gedaan')  AS urgent,
+                COUNT(*)                                          AS totaal,
+                SUM(status = 'open')                             AS open,
+                SUM(status = 'bezig')                            AS bezig,
+                SUM(status = 'gedaan')                           AS gedaan,
+                SUM(priority = 'hoog' AND status != 'gedaan')    AS urgent,
                 SUM(deadline < CURDATE() AND status != 'gedaan') AS verlopen
              FROM tasks
              WHERE user_id = :user_id"
