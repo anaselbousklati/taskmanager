@@ -1,12 +1,10 @@
 <?php
-// Bepaal of we bezig zijn met aanmaken of bewerken
 $isEdit = isset($task);
 $title  = $isEdit ? 'Taak bewerken' : 'Nieuwe taak';
 $action = $isEdit
     ? "index.php?page=tasks&action=update&id={$task['id']}"
     : "index.php?page=tasks&action=store";
 
-// Gebruik $old voor terugplaatsen waarden na validatiefout, anders taakdata
 $v = $old ?? $task ?? [];
 
 require APP . '/views/layouts/header.php';
@@ -17,7 +15,6 @@ require APP . '/views/layouts/header.php';
     <a href="index.php?page=tasks" class="btn btn-secondary">← Terug</a>
 </div>
 
-<!-- Validatiefouten -->
 <?php if (!empty($errors)): ?>
     <div class="alert alert-error">
         <ul style="margin:0;padding-left:1.2rem;">
@@ -30,10 +27,8 @@ require APP . '/views/layouts/header.php';
 
 <div class="card" style="max-width:600px;">
     <form method="POST" action="<?= $action ?>">
-        <!-- CSRF bescherming -->
         <input type="hidden" name="csrf_token" value="<?= generateCsrfToken() ?>">
 
-        <!-- Titel -->
         <div class="form-group">
             <label for="title">Titel <span class="required">*</span></label>
             <input type="text"
@@ -45,7 +40,6 @@ require APP . '/views/layouts/header.php';
                    required>
         </div>
 
-        <!-- Beschrijving -->
         <div class="form-group">
             <label for="description">Beschrijving</label>
             <textarea id="description"
@@ -54,7 +48,6 @@ require APP . '/views/layouts/header.php';
                       rows="3"><?= htmlspecialchars($v['description'] ?? '') ?></textarea>
         </div>
 
-        <!-- Categorie + Prioriteit naast elkaar -->
         <div class="form-row">
             <div class="form-group">
                 <label for="category_id">Categorie</label>
@@ -79,7 +72,6 @@ require APP . '/views/layouts/header.php';
             </div>
         </div>
 
-        <!-- Status + Deadline naast elkaar -->
         <div class="form-row">
             <div class="form-group">
                 <label for="status">Status</label>
@@ -101,10 +93,10 @@ require APP . '/views/layouts/header.php';
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary btn-full">
                 <?= $isEdit ? 'Wijzigingen opslaan' : 'Taak aanmaken' ?>
             </button>
-            <a href="index.php?page=tasks" class="btn btn-secondary">Annuleren</a>
+            <a href="index.php?page=tasks" class="btn btn-secondary btn-full">Annuleren</a>
         </div>
     </form>
 </div>

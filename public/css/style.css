@@ -174,7 +174,7 @@ body {
 }
 
 .task-list {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: .6rem;
 }
@@ -234,7 +234,7 @@ body {
 }
 
 .table-container {
-    display: none;
+    display: block;
 }
 
 .table-wrapper {
@@ -494,15 +494,17 @@ body {
         flex-direction: row;
     }
 
+    .nav-user {
+        display: inline;
+    }
+}
+
+@media (max-width: 639px) {
     .task-list {
-        display: none;
+        display: flex;
     }
 
     .table-container {
-        display: block;
-    }
-
-    .nav-user {
-        display: inline;
+        display: none;
     }
 }
