@@ -2,15 +2,18 @@
 
 class TaskController
 {
-    private Task     $taskModel;
-    private Category $categoryModel;
+    private Task         $taskModel;
+    private Category     $categoryModel;
+    private Tag          $tagModel;
+    private TaskLog      $logModel;
 
     public function __construct()
     {
         requireLogin();
-
         $this->taskModel     = new Task();
         $this->categoryModel = new Category();
+        $this->tagModel      = new Tag();
+        $this->logModel      = new TaskLog();
     }
 
     public function index(): void
@@ -20,10 +23,10 @@ class TaskController
         $priority = $_GET['priority'] ?? '';
         $sort     = $_GET['sort']     ?? 'deadline';
 
-        $allowedStatuses    = ['', 'open', 'bezig', 'gedaan'];
-        $allowedPriorities  = ['', 'laag', 'normaal', 'hoog'];
+        $allowedStatuses   = ['', 'open', 'bezig', 'gedaan'];
+        $allowedPriorities = ['', 'laag', 'normaal', 'hoog'];
 
-        if (!in_array($status, $allowedStatuses))   $status   = '';
+        if (!in_array($status,   $allowedStatuses))   $status   = '';
         if (!in_array($priority, $allowedPriorities)) $priority = '';
 
         $tasks      = $this->taskModel->getAllByUser($userId, $status, $priority, $sort);
@@ -33,13 +36,12 @@ class TaskController
         require APP . '/views/tasks/index.php';
     }
 
- 
     public function create(): void
     {
         $categories = $this->categoryModel->getAllByUser($_SESSION['user_id']);
+        $tags       = $this->tagModel->getAll();
         require APP . '/views/tasks/form.php';
     }
-
 
     public function store(): void
     {
@@ -53,22 +55,27 @@ class TaskController
 
         if (!empty($errors)) {
             $categories = $this->categoryModel->getAllByUser($_SESSION['user_id']);
-            $old        = $_POST; 
+            $tags       = $this->tagModel->getAll();
+            $old        = $_POST;
             require APP . '/views/tasks/form.php';
             return;
         }
 
-        $created = $this->taskModel->create([
+        $taskId = $this->taskModel->create([
             'user_id'     => $_SESSION['user_id'],
             'category_id' => $_POST['category_id'] ?? null,
             'title'       => sanitize($_POST['title']),
             'description' => sanitize($_POST['description'] ?? ''),
             'priority'    => $_POST['priority'] ?? 'normaal',
-            'status'      => $_POST['status'] ?? 'open',
-            'deadline'    => $_POST['deadline'] ?? null,
+            'status'      => $_POST['status']   ?? 'open',
+            'deadline'    => $_POST['deadline']  ?? null,
         ]);
 
-        if ($created) {
+        if ($taskId) {
+            $selectedTags = $_POST['tags'] ?? [];
+            if (!empty($selectedTags)) {
+                $this->tagModel->syncTaskTags($taskId, $selectedTags);
+            }
             $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Taak aangemaakt!'];
         } else {
             $_SESSION['flash'] = ['type' => 'error', 'msg' => 'Er ging iets mis. Probeer opnieuw.'];
@@ -76,7 +83,6 @@ class TaskController
 
         redirect('tasks');
     }
-
 
     public function edit(int $id): void
     {
@@ -87,10 +93,13 @@ class TaskController
             redirect('tasks');
         }
 
-        $categories = $this->categoryModel->getAllByUser($_SESSION['user_id']);
+        $categories  = $this->categoryModel->getAllByUser($_SESSION['user_id']);
+        $tags        = $this->tagModel->getAll();
+        $taskTags    = array_column($this->tagModel->getByTask($id), 'id');
+        $taskLogs    = $this->logModel->getByTask($id);
+
         require APP . '/views/tasks/form.php';
     }
-
 
     public function update(int $id): void
     {
@@ -103,9 +112,12 @@ class TaskController
         $errors = $this->validateTaskInput($_POST);
 
         if (!empty($errors)) {
-            $task       = $this->taskModel->getById($id, $_SESSION['user_id']);
-            $categories = $this->categoryModel->getAllByUser($_SESSION['user_id']);
-            $old        = $_POST;
+            $task        = $this->taskModel->getById($id, $_SESSION['user_id']);
+            $categories  = $this->categoryModel->getAllByUser($_SESSION['user_id']);
+            $tags        = $this->tagModel->getAll();
+            $taskTags    = array_column($this->tagModel->getByTask($id), 'id');
+            $taskLogs    = $this->logModel->getByTask($id);
+            $old         = $_POST;
             require APP . '/views/tasks/form.php';
             return;
         }
@@ -115,9 +127,13 @@ class TaskController
             'title'       => sanitize($_POST['title']),
             'description' => sanitize($_POST['description'] ?? ''),
             'priority'    => $_POST['priority'] ?? 'normaal',
-            'status'      => $_POST['status'] ?? 'open',
-            'deadline'    => $_POST['deadline'] ?? null,
+            'status'      => $_POST['status']   ?? 'open',
+            'deadline'    => $_POST['deadline']  ?? null,
         ]);
+
+        if ($updated) {
+            $this->tagModel->syncTaskTags($id, $_POST['tags'] ?? []);
+        }
 
         $_SESSION['flash'] = $updated
             ? ['type' => 'success', 'msg' => 'Taak bijgewerkt!']
@@ -125,7 +141,6 @@ class TaskController
 
         redirect('tasks');
     }
-
 
     public function delete(int $id): void
     {
@@ -140,7 +155,6 @@ class TaskController
         redirect('tasks');
     }
 
-
     private function validateTaskInput(array $data): array
     {
         $errors = [];
@@ -151,13 +165,11 @@ class TaskController
             $errors[] = 'Titel mag maximaal 255 tekens bevatten.';
         }
 
-        $allowedPriorities = ['laag', 'normaal', 'hoog'];
-        if (!in_array($data['priority'] ?? '', $allowedPriorities)) {
+        if (!in_array($data['priority'] ?? '', ['laag', 'normaal', 'hoog'])) {
             $errors[] = 'Ongeldige prioriteit.';
         }
 
-        $allowedStatuses = ['open', 'bezig', 'gedaan'];
-        if (!in_array($data['status'] ?? '', $allowedStatuses)) {
+        if (!in_array($data['status'] ?? '', ['open', 'bezig', 'gedaan'])) {
             $errors[] = 'Ongeldige status.';
         }
 

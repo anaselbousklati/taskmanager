@@ -5,7 +5,9 @@ $action = $isEdit
     ? "index.php?page=tasks&action=update&id={$task['id']}"
     : "index.php?page=tasks&action=store";
 
-$v = $old ?? $task ?? [];
+$v        = $old ?? $task ?? [];
+$taskTags = $taskTags ?? [];
+$taskLogs = $taskLogs ?? [];
 
 require APP . '/views/layouts/header.php';
 ?>
@@ -92,6 +94,25 @@ require APP . '/views/layouts/header.php';
             </div>
         </div>
 
+        <?php if (!empty($tags)): ?>
+        <div class="form-group">
+            <label>Tags</label>
+            <div class="tags-checkboxes">
+                <?php foreach ($tags as $tag): ?>
+                    <label class="tag-option">
+                        <input type="checkbox"
+                               name="tags[]"
+                               value="<?= $tag['id'] ?>"
+                               <?= in_array($tag['id'], $taskTags) ? 'checked' : '' ?>>
+                        <span class="tag-label" style="background:<?= htmlspecialchars($tag['color']) ?>20;color:<?= htmlspecialchars($tag['color']) ?>;border:1px solid <?= htmlspecialchars($tag['color']) ?>;">
+                            <?= htmlspecialchars($tag['name']) ?>
+                        </span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary btn-full">
                 <?= $isEdit ? 'Wijzigingen opslaan' : 'Taak aanmaken' ?>
@@ -100,5 +121,29 @@ require APP . '/views/layouts/header.php';
         </div>
     </form>
 </div>
+
+<?php if ($isEdit && !empty($taskLogs)): ?>
+<div class="card" style="max-width:600px;margin-top:1rem;">
+    <h3 style="font-size:1rem;font-weight:600;margin-bottom:.75rem;">Statusgeschiedenis</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Van</th>
+                <th>Naar</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($taskLogs as $log): ?>
+            <tr>
+                <td><span class="badge <?= statusBadge($log['old_status']) ?>"><?= ucfirst($log['old_status']) ?></span></td>
+                <td><span class="badge <?= statusBadge($log['new_status']) ?>"><?= ucfirst($log['new_status']) ?></span></td>
+                <td class="text-muted"><?= date('d M Y H:i', strtotime($log['changed_at'])) ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+<?php endif; ?>
 
 <?php require APP . '/views/layouts/footer.php'; ?>
