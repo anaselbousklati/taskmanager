@@ -1,0 +1,10 @@
+# Schakel directory listing uit (security)
+Options -Indexes
+
+# Stel de standaardpagina in
+DirectoryIndex index.php
+
+# Sta alleen toegang toe tot index.php, css en js
+<FilesMatch "^(?!index\.php$).*\.php$">
+    Require all denied
+</FilesMatch>
