@@ -9,11 +9,12 @@
 <body>
 
 <nav class="navbar">
-    <div class="nav-brand">✓ TaskManager</div>
+    <div class="nav-brand">&#10003; TaskManager</div>
     <?php if (isLoggedIn()): ?>
         <div class="nav-links">
-            <span class="nav-user">👤 <?= htmlspecialchars($_SESSION['user_name']) ?></span>
+            <span class="nav-user">&#128100; <?= htmlspecialchars($_SESSION['user_name']) ?></span>
             <a href="index.php?page=tasks" class="nav-link">Mijn taken</a>
+            <a href="index.php?page=settings" class="nav-link">Instellingen</a>
             <a href="index.php?page=logout" class="nav-link nav-logout">Uitloggen</a>
         </div>
     <?php endif; ?>
@@ -22,7 +23,6 @@
 <main class="container">
 
     <?php
-    // Toon flash bericht als dat er is
     $flash = getFlash();
     if ($flash): ?>
         <div class="alert alert-<?= $flash['type'] ?>">

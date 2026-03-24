@@ -508,3 +508,33 @@ body {
         display: none;
     }
 }
+
+.tags-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.tag-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.tag-option input[type="checkbox"] {
+    display: none;
+}
+
+.tag-label {
+    padding: .2rem .65rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+    user-select: none;
+}
+
+.tag-option input[type="checkbox"]:not(:checked) + .tag-label {
+    opacity: .4;
+}

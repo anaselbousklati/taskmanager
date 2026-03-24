@@ -9,9 +9,9 @@ session_name(getenv('SESSION_NAME') ?: 'taskmanager_session');
 session_set_cookie_params([
     'lifetime' => (int)(getenv('SESSION_LIFETIME') ?: 3600),
     'path'     => '/',
-    'secure'   => false,     
-    'httponly' => true,      
-    'samesite' => 'Strict',  
+    'secure'   => false,
+    'httponly' => true,
+    'samesite' => 'Strict',
 ]);
 session_start();
 
@@ -20,10 +20,14 @@ require APP  . '/helpers.php';
 
 require APP . '/models/User.php';
 require APP . '/models/Task.php';
+require APP . '/models/TaskLog.php';
+require APP . '/models/Tag.php';
 require APP . '/models/Category.php';
+require APP . '/models/UserSettings.php';
 
 require APP . '/controllers/AuthController.php';
 require APP . '/controllers/TaskController.php';
+require APP . '/controllers/SettingsController.php';
 
 $page   = $_GET['page']   ?? 'tasks';
 $action = $_GET['action'] ?? null;
@@ -59,6 +63,13 @@ switch ($page) {
             'delete' => $ctrl->delete($id),
             default  => $ctrl->index(),
         };
+        break;
+
+    case 'settings':
+        $ctrl = new SettingsController();
+        ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'update')
+            ? $ctrl->update()
+            : $ctrl->index();
         break;
 
     default:
